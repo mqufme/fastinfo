@@ -3,48 +3,972 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsAggregator - Главные новости</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>NewsHub - Ваш источник новостей</title>
+    <meta name="description" content="Агрегатор новостей из проверенных источников">
+    <style>
+        :root {
+            /* Светлая тема */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent: #007bff;
+            --border: #dee2e6;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --hover: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            /* Темная тема */
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-card: #1e1e1e;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --accent: #4dabf7;
+            --border: #343a40;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --hover: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--bg-secondary);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            width: 200px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        select {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--hover);
+        }
+
+        .refresh-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Main content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .article-card {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .article-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .article-content {
+            padding: 1.25rem;
+        }
+
+        .article-title {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-summary {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .source {
+            font-weight: 600;
+        }
+
+        .date {
+            font-style: italic;
+        }
+
+        /* Loader */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        .error-message {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #dc3545;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        /* Load more button */
+        .load-more-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .load-more-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .load-more-btn:hover {
+            opacity: 0.9;
+        }
+
+        .load-more-btn:disabled {
+            background-color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem 1rem;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-image {
+            width: 100%;
+            max-height: 350px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .modal-summary {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .modal-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: right;
+        }
+
+        .read-original-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .read-original-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .filters {
+                flex-wrap: wrap;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box input {
+                width: 150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 1rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <header class="header">
-        <nav class="navbar">
-            <div class="nav-brand">NewsAggregator</div>
-            <ul class="nav-links">
-                <li><a href="#politics">Политика</a></li>
-                <li><a href="#economics">Экономика</a></li>
-                <li><a href="#technology">Технологии</a></li>
-                <li><a href="#sports">Спорт</a></li>
-            </ul>
-            <div class="search-box">
-                <input type="text" placeholder="Поиск новостей...">
+    <header>
+        <div class="header-container">
+            <a href="#" class="logo">NewsHub</a>
+            <div class="controls">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Поиск новостей...">
+                </div>
+                <div class="filters">
+                    <select id="source-filter">
+                        <option value="">Все источники</option>
+                    </select>
+                    <select id="category-filter">
+                        <option value="">Все категории</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" id="refresh-btn">
+                    <span>Обновить</span>
+                </button>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
+                    🌙
+                </button>
             </div>
-        </nav>
+        </div>
     </header>
 
-    <main class="main-content">
-        <section class="hero-section">
-            <div class="hero-news" id="featured-news">
-                <!-- Главная новость дня -->
-            </div>
-        </section>
+    <main>
+        <div class="articles-grid" id="articles-container">
+            <!-- Статьи будут загружены здесь -->
+        </div>
 
-        <section class="news-grid" id="news-container">
-            <!-- Сетка новостей -->
-        </section>
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p>Загрузка новостей...</p>
+        </div>
 
-        <section class="sources-section">
-            <h3>Источники</h3>
-            <div class="sources-grid">
-                <!-- Логотипы источников -->
-            </div>
-        </section>
+        <div class="error-message" id="error-message">
+            <p>Не удалось загрузить новости. Пожалуйста, попробуйте позже.</p>
+        </div>
+
+        <div class="load-more-container">
+            <button class="load-more-btn" id="load-more-btn">Показать ещё</button>
+        </div>
     </main>
 
-    <footer class="footer">
-        <p>&copy; 2024 NewsAggregator. Все права защищены.</p>
-    </footer>
+    <div class="modal" id="article-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Заголовок статьи</h2>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <img id="modal-image" src="" alt="" class="modal-image">
+                <p class="modal-summary" id="modal-summary">Краткое описание статьи</p>
+                <div class="modal-meta">
+                    <span class="source" id="modal-source">Источник</span>
+                    <span class="date" id="modal-date">Дата публикации</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modal-link" class="read-original-btn" target="_blank">Читать в оригинале</a>
+            </div>
+        </div>
+    </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Конфигурация
+        const CONFIG = {
+            API_ENDPOINT: '/api/articles',
+            ARTICLES_PER_PAGE: 9,
+            DEBOUNCE_DELAY: 300
+        };
+
+        // Состояние приложения
+        const state = {
+            articles: [],
+            filteredArticles: [],
+            currentPage: 1,
+            hasMore: true,
+            isLoading: false,
+            filters: {
+                search: '',
+                source: '',
+                category: ''
+            }
+        };
+
+        // DOM элементы
+        const elements = {
+            articlesContainer: document.getElementById('articles-container'),
+            loader: document.getElementById('loader'),
+            errorMessage: document.getElementById('error-message'),
+            loadMoreBtn: document.getElementById('load-more-btn'),
+            searchInput: document.getElementById('search-input'),
+            sourceFilter: document.getElementById('source-filter'),
+            categoryFilter: document.getElementById('category-filter'),
+            refreshBtn: document.getElementById('refresh-btn'),
+            themeToggle: document.getElementById('theme-toggle'),
+            articleModal: document.getElementById('article-modal'),
+            closeModal: document.getElementById('close-modal'),
+            modalTitle: document.getElementById('modal-title'),
+            modalImage: document.getElementById('modal-image'),
+            modalSummary: document.getElementById('modal-summary'),
+            modalSource: document.getElementById('modal-source'),
+            modalDate: document.getElementById('modal-date'),
+            modalLink: document.getElementById('modal-link')
+        };
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
+
+        /**
+         * Инициализация приложения
+         */
+        function initializeApp() {
+            // Загрузка начальных данных
+            fetchArticles();
+
+            // Настройка обработчиков событий
+            setupEventListeners();
+
+            // Восстановление темы из localStorage
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        /**
+         * Настройка обработчиков событий
+         */
+        function setupEventListeners() {
+            // Поиск с дебаунсингом
+            let searchTimeout;
+            elements.searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    state.filters.search = e.target.value;
+                    applyFilters();
+                }, CONFIG.DEBOUNCE_DELAY);
+            });
+
+            // Фильтры
+            elements.sourceFilter.addEventListener('change', (e) => {
+                state.filters.source = e.target.value;
+                applyFilters();
+            });
+
+            elements.categoryFilter.addEventListener('change', (e) => {
+                state.filters.category = e.target.value;
+                applyFilters();
+            });
+
+            // Кнопка обновления
+            elements.refreshBtn.addEventListener('click', () => {
+                resetState();
+                fetchArticles();
+            });
+
+            // Кнопка "Показать ещё"
+            elements.loadMoreBtn.addEventListener('click', () => {
+                state.currentPage++;
+                fetchArticles();
+            });
+
+            // Переключение темы
+            elements.themeToggle.addEventListener('click', toggleTheme);
+
+            // Модальное окно
+            elements.closeModal.addEventListener('click', closeModal);
+            elements.articleModal.addEventListener('click', (e) => {
+                if (e.target === elements.articleModal) {
+                    closeModal();
+                }
+            });
+
+            // Закрытие модального окна по ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        }
+
+        /**
+         * Загрузка статей с сервера
+         */
+        async function fetchArticles() {
+            if (state.isLoading) return;
+
+            state.isLoading = true;
+            showLoader();
+            hideError();
+
+            try {
+                // В реальном приложении здесь будет fetch к API
+                // const response = await fetch(`${CONFIG.API_ENDPOINT}?page=${state.currentPage}&limit=${CONFIG.ARTICLES_PER_PAGE}`);
+                // const data = await response.json();
+                
+                // Имитация загрузки данных
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Заглушка с тестовыми данными
+                const mockData = generateMockData();
+                
+                if (state.currentPage === 1) {
+                    state.articles = mockData;
+                } else {
+                    state.articles = [...state.articles, ...mockData];
+                }
+
+                // Обновление фильтров
+                updateFilterOptions();
+                
+                // Применение фильтров
+                applyFilters();
+                
+                // Проверка наличия дополнительных данных
+                state.hasMore = mockData.length === CONFIG.ARTICLES_PER_PAGE;
+                updateLoadMoreButton();
+
+            } catch (error) {
+                console.error('Ошибка загрузки статей:', error);
+                showError();
+            } finally {
+                state.isLoading = false;
+                hideLoader();
+            }
+        }
+
+        /**
+         * Генерация тестовых данных (для демонстрации)
+         */
+        function generateMockData() {
+            const sources = ['BBC News', 'The Guardian', 'Reuters', 'Associated Press', 'CNN'];
+            const categories = ['Политика', 'Технологии', 'Наука', 'Спорт', 'Здоровье'];
+            
+            return Array.from({ length: CONFIG.ARTICLES_PER_PAGE }, (_, i) => {
+                const source = sources[Math.floor(Math.random() * sources.length)];
+                const category = categories[Math.floor(Math.random() * categories.length)];
+                
+                return {
+                    id: `article-${state.currentPage}-${i}`,
+                    title: `Новость ${state.currentPage * CONFIG.ARTICLES_PER_PAGE + i + 1}: ${getRandomTitle(category)}`,
+                    summary: `Это краткое описание новости о ${category.toLowerCase()}. Подробности можно узнать, перейдя по ссылке на оригинальную статью.`,
+                    image: `https://picsum.photos/400/200?random=${state.currentPage * CONFIG.ARTICLES_PER_PAGE + i}`,
+                    source_name: source,
+                    source_url: `https://example.com/${source.toLowerCase().replace(' ', '-')}`,
+                    published_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    category: category,
+                    full_text_url: `https://example.com/article/${state.currentPage * CONFIG.ARTICLES_PER_PAGE + i}`
+                };
+            });
+        }
+
+        /**
+         * Генерация случайных заголовков по категориям
+         */
+        function getRandomTitle(category) {
+            const titles = {
+                'Политика': [
+                    'Новые политические реформы',
+                    'Международные переговоры',
+                    'Выборы и их последствия'
+                ],
+                'Технологии': [
+                    'Прорыв в искусственном интеллекте',
+                    'Новые гаджеты и устройства',
+                    'Кибербезопасность и угрозы'
+                ],
+                'Наука': [
+                    'Научное открытие года',
+                    'Исследования космоса',
+                    'Медицинские инновации'
+                ],
+                'Спорт': [
+                    'Результаты чемпионата',
+                    'Трансферы спортсменов',
+                    'Подготовка к Олимпиаде'
+                ],
+                'Здоровье': [
+                    'Новые методы лечения',
+                    'Советы по здоровому образу жизни',
+                    'Исследования в области медицины'
+                ]
+            };
+            
+            const categoryTitles = titles[category] || titles['Политика'];
+            return categoryTitles[Math.floor(Math.random() * categoryTitles.length)];
+        }
+
+        /**
+         * Обновление опций в фильтрах
+         */
+        function updateFilterOptions() {
+            // Источники
+            const sources = [...new Set(state.articles.map(article => article.source_name))];
+            updateSelectOptions(elements.sourceFilter, sources, state.filters.source);
+            
+            // Категории
+            const categories = [...new Set(state.articles.map(article => article.category))];
+            updateSelectOptions(elements.categoryFilter, categories, state.filters.category);
+        }
+
+        /**
+         * Обновление опций в селекте
+         */
+        function updateSelectOptions(selectElement, options, currentValue) {
+            // Сохраняем текущее значение
+            const currentSelected = selectElement.value;
+            
+            // Очищаем все опции кроме первой ("Все")
+            while (selectElement.options.length > 1) {
+                selectElement.remove(1);
+            }
+            
+            // Добавляем новые опции
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                selectElement.appendChild(optionElement);
+            });
+            
+            // Восстанавливаем выбранное значение, если оно все еще доступно
+            if (options.includes(currentSelected)) {
+                selectElement.value = currentSelected;
+            } else {
+                selectElement.value = currentValue || '';
+            }
+        }
+
+        /**
+         * Применение фильтров к статьям
+         */
+        function applyFilters() {
+            let filtered = [...state.articles];
+            
+            // Фильтр по поиску
+            if (state.filters.search) {
+                const searchTerm = state.filters.search.toLowerCase();
+                filtered = filtered.filter(article => 
+                    article.title.toLowerCase().includes(searchTerm) ||
+                    article.summary.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Фильтр по источнику
+            if (state.filters.source) {
+                filtered = filtered.filter(article => 
+                    article.source_name === state.filters.source
+                );
+            }
+            
+            // Фильтр по категории
+            if (state.filters.category) {
+                filtered = filtered.filter(article => 
+                    article.category === state.filters.category
+                );
+            }
+            
+            state.filteredArticles = filtered;
+            renderArticles();
+        }
+
+        /**
+         * Отрисовка статей
+         */
+        function renderArticles() {
+            if (state.filteredArticles.length === 0) {
+                elements.articlesContainer.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                        <p>Новости не найдены. Попробуйте изменить параметры поиска.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Очищаем контейнер только при первой загрузке или сбросе фильтров
+            if (state.currentPage === 1) {
+                elements.articlesContainer.innerHTML = '';
+            }
+            
+            // Отрисовываем статьи
+            state.filteredArticles.forEach(article => {
+                const articleElement = createArticleElement(article);
+                elements.articlesContainer.appendChild(articleElement);
+            });
+        }
+
+        /**
+         * Создание элемента статьи
+         */
+        function createArticleElement(article) {
+            const articleDiv = document.createElement('div');
+            articleDiv.className = 'article-card';
+            articleDiv.dataset.id = article.id;
+            
+            articleDiv.innerHTML = `
+                <img src="${article.image}" alt="${article.title}" class="article-image" onerror="this.src='https://picsum.photos/400/200?random=999'">
+                <div class="article-content">
+                    <h3 class="article-title">${article.title}</h3>
+                    <p class="article-summary">${article.summary}</p>
+                    <div class="article-meta">
+                        <span class="source">${article.source_name}</span>
+                        <span class="date">${formatDate(article.published_at)}</span>
+                    </div>
+                </div>
+            `;
+            
+            // Обработчик клика для открытия модального окна
+            articleDiv.addEventListener('click', () => openModal(article));
+            
+            return articleDiv;
+        }
+
+        /**
+         * Открытие модального окна с деталями статьи
+         */
+        function openModal(article) {
+            elements.modalTitle.textContent = article.title;
+            elements.modalImage.src = article.image;
+            elements.modalImage.alt = article.title;
+            elements.modalSummary.textContent = article.summary;
+            elements.modalSource.textContent = article.source_name;
+            elements.modalDate.textContent = formatDate(article.published_at);
+            elements.modalLink.href = article.full_text_url;
+            
+            elements.articleModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        /**
+         * Закрытие модального окна
+         */
+        function closeModal() {
+            elements.articleModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        /**
+         * Форматирование даты
+         */
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return 'Сегодня';
+            } else if (diffDays === 1) {
+                return 'Вчера';
+            } else if (diffDays < 7) {
+                return `${diffDays} дней назад`;
+            } else {
+                return date.toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            }
+        }
+
+        /**
+         * Переключение темы
+         */
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
+        }
+
+        /**
+         * Установка темы
+         */
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            // Обновление иконки темы
+            elements.themeToggle.textContent = theme === 'light' ? '🌙' : '☀️';
+        }
+
+        /**
+         * Сброс состояния приложения
+         */
+        function resetState() {
+            state.currentPage = 1;
+            state.articles = [];
+            state.filteredArticles = [];
+            state.filters.search = '';
+            state.filters.source = '';
+            state.filters.category = '';
+            
+            elements.searchInput.value = '';
+            elements.sourceFilter.value = '';
+            elements.categoryFilter.value = '';
+            
+            elements.articlesContainer.innerHTML = '';
+        }
+
+        /**
+         * Обновление состояния кнопки "Показать ещё"
+         */
+        function updateLoadMoreButton() {
+            elements.loadMoreBtn.disabled = !state.hasMore || state.isLoading;
+            elements.loadMoreBtn.textContent = state.hasMore ? 'Показать ещё' : 'Все новости загружены';
+        }
+
+        /**
+         * Показать индикатор загрузки
+         */
+        function showLoader() {
+            elements.loader.classList.add('active');
+        }
+
+        /**
+         * Скрыть индикатор загрузки
+         */
+        function hideLoader() {
+            elements.loader.classList.remove('active');
+        }
+
+        /**
+         * Показать сообщение об ошибке
+         */
+        function showError() {
+            elements.errorMessage.classList.add('active');
+        }
+
+        /**
+         * Скрыть сообщение об ошибке
+         */
+        function hideError() {
+            elements.errorMessage.classList.remove('active');
+        }
+    </script>
 </body>
 </html>
